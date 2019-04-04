@@ -408,8 +408,10 @@ class Bling extends Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        const { propsEqual, npa } = Bling._config;
-        const { sizeMapping } = this.props;
+        const {propsEqual} = Bling._config;
+        const {sizeMapping} = this.props;
+        const {npa} = nextProps;
+
         if (
             (nextProps.sizeMapping || sizeMapping) &&
             !propsEqual(nextProps.sizeMapping, sizeMapping)
