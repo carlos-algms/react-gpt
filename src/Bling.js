@@ -219,8 +219,7 @@ class Bling extends Component {
         "collapseEmptyDiv",
         "companionAdService",
         "forceSafeFrame",
-        "safeFrameConfig",
-        "npa"
+        "safeFrameConfig"
     ];
     /**
      * An array of prop names which requires to create a new ad slot and render as a new ad.
@@ -228,7 +227,13 @@ class Bling extends Component {
      * @property reRenderProps
      * @static
      */
-    static reRenderProps = ["adUnitPath", "slotSize", "outOfPage", "content"];
+    static reRenderProps = [
+        "adUnitPath",
+        "slotSize",
+        "outOfPage",
+        "content",
+        "npa"
+    ];
     /**
      * An instance of ad manager.
      *
@@ -804,14 +809,16 @@ class Bling extends Component {
      * @param {boolean} npa
      */
     handleSetNpaFlag(npa) {
-        if (npa !== undefined) {
-            Bling._adManager.pubadsProxy({
-                method: "setRequestNonPersonalizedAds",
-                args: [npa ? 1 : 0],
-                resolve: null,
-                reject: null
-            });
+        if (npa === undefined) {
+            return;
         }
+
+        Bling._adManager.pubadsProxy({
+            method: "setRequestNonPersonalizedAds",
+            args: [npa ? 1 : 0],
+            resolve: null,
+            reject: null
+        });
     }
 }
 
