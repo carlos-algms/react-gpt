@@ -191,7 +191,17 @@ class Bling extends Component {
          *
          * @property style
          */
-        style: PropTypes.object
+        style: PropTypes.object,
+        /**
+         * An optional property to control non-personalized Ads.
+         * https://support.google.com/admanager/answer/7678538
+         *
+         * Set to `true` to mark the ad request as NPA, and to `false` for ad requests that are eligible for personalized ads
+         * It is `false` by default, according to Google's definition.
+         *
+         * @property npa
+         */
+        npa: PropTypes.bool
     };
 
     /**
@@ -209,7 +219,8 @@ class Bling extends Component {
         "collapseEmptyDiv",
         "companionAdService",
         "forceSafeFrame",
-        "safeFrameConfig"
+        "safeFrameConfig",
+        "npa"
     ];
     /**
      * An array of prop names which requires to create a new ad slot and render as a new ad.
@@ -378,6 +389,11 @@ class Bling extends Component {
             : Bling._config.viewableThreshold;
     }
 
+    componentWillMount() {
+        const {npa} = this.props;
+        this.handleSetNpaFlag(npa);
+    }
+
     componentDidMount() {
         Bling._adManager.addInstance(this);
         Bling._adManager
@@ -387,7 +403,7 @@ class Bling extends Component {
     }
 
     componentWillReceiveProps(nextProps) {
-        const { propsEqual } = Bling._config;
+        const { propsEqual, npa } = Bling._config;
         const { sizeMapping } = this.props;
         if (
             (nextProps.sizeMapping || sizeMapping) &&
@@ -395,6 +411,8 @@ class Bling extends Component {
         ) {
             Bling._adManager.removeMQListener(this, nextProps);
         }
+
+        this.handleSetNpaFlag(npa);
     }
 
     shouldComponentUpdate(nextProps, nextState) {
@@ -778,6 +796,22 @@ class Bling extends Component {
         this._divId = id || Bling._adManager.generateDivId();
 
         return <div id={this._divId} style={style} />;
+    }
+
+    /**
+     * Call pubads and set the non-personalized Ads flag, if it is not undefined.
+     *
+     * @param {boolean} npa
+     */
+    handleSetNpaFlag(npa) {
+        if (npa !== undefined) {
+            Bling._adManager.pubadsProxy({
+                method: "setRequestNonPersonalizedAds",
+                args: [npa ? 1 : 0],
+                resolve: null,
+                reject: null
+            });
+        }
     }
 }
 
