@@ -209,9 +209,9 @@ class Bling extends Component {
          * Set to `true` to mark the ad request as limited, and to `false` for the personalized ads requests when user consent has been given.
          * It is `false` by default, according to Google's definition.
          *
-         * @property limited
+         * @property limitedAds
          */
-        limited: PropTypes.bool
+        limitedAds: PropTypes.bool
     };
 
     /**
@@ -229,7 +229,8 @@ class Bling extends Component {
         "collapseEmptyDiv",
         "companionAdService",
         "forceSafeFrame",
-        "safeFrameConfig"
+        "safeFrameConfig",
+        "limitedAds"
     ];
     /**
      * An array of prop names which requires to create a new ad slot and render as a new ad.
@@ -242,7 +243,8 @@ class Bling extends Component {
         "slotSize",
         "outOfPage",
         "content",
-        "npa"
+        "npa",
+        "limitedAds"
     ];
     /**
      * An instance of ad manager.
@@ -412,10 +414,10 @@ class Bling extends Component {
             : Bling._config.viewableThreshold;
     }
 
-    getSeedUrl() {
-        const {limited} = this.props;
+    get seedUrl() {
+        const {limitedAds} = this.props;
 
-        if (limited) {
+        if (limitedAds) {
             return Bling._config.seedFileUrlLimited;
         }
 
@@ -425,7 +427,7 @@ class Bling extends Component {
     componentDidMount() {
         Bling._adManager.addInstance(this);
         Bling._adManager
-            .load(this.getSeedUrl())
+            .load(this.seedUrl)
             .then(this.onScriptLoaded.bind(this))
             .catch(this.onScriptError.bind(this));
     }
@@ -532,7 +534,7 @@ class Bling extends Component {
     }
 
     onScriptError(err) {
-        console.warn(`Ad: Failed to load gpt for ${this.getSeedUrl()}`, err);
+        console.warn(`Ad: Failed to load gpt for ${this.seedUrl()}`, err);
     }
 
     getRenderWhenViewable(props = this.props) {
@@ -599,6 +601,10 @@ class Bling extends Component {
                 adSlot.setTargeting(key, targeting[key]);
             });
         }
+    }
+
+    setLimited(limited) {
+        Bling._adManager.setLimited(limited);
     }
 
     addCompanionAdService(serviceConfig, adSlot) {
@@ -678,7 +684,8 @@ class Bling extends Component {
             safeFrameConfig,
             content,
             clickUrl,
-            forceSafeFrame
+            forceSafeFrame,
+            limitedAds
         } = props;
 
         this.defineSizeMapping(adSlot, sizeMapping);
@@ -713,6 +720,9 @@ class Bling extends Component {
 
         // Sets custom targeting parameters
         this.setTargeting(adSlot, targeting);
+
+        // Sets serving limited ads
+        this.setLimited(limitedAds);
 
         if (safeFrameConfig) {
             adSlot.setSafeFrameConfig(safeFrameConfig);

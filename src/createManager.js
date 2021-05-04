@@ -97,6 +97,15 @@ export class AdManager extends EventEmitter {
         }
     }
 
+    _setPrivacySettings(custom = {}) {
+        const config = this.googletag.PrivacySettingsConfig;
+
+        // based on https://developers.google.com/publisher-tag/reference#googletag.privacysettingsconfig
+        this.googletag.PrivacySettingsConfig = config
+            ? {...config, ...custom}
+            : custom;
+    }
+
     _processPubadsQueue() {
         if (this._pubadsProxyQueue) {
             Object.keys(this._pubadsProxyQueue).forEach(method => {
@@ -305,6 +314,18 @@ export class AdManager extends EventEmitter {
                 );
                 delete this._mqls[key];
             }
+        });
+    }
+
+    /**
+     * Sets the tag manager to use limited ads when customer compliance is not given.
+     *
+     * @param {Boolean} limited A boolean signaling if limited ads should be shown [true] or not [false/omitted].
+     */
+    setLimited(limited) {
+        this._setPrivacySettings({
+            // based on https://developers.google.com/publisher-tag/reference#boolean-limitedads
+            limitedAds: !!limited
         });
     }
 
