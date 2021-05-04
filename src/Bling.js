@@ -201,7 +201,17 @@ class Bling extends Component {
          *
          * @property npa
          */
-        npa: PropTypes.bool
+        npa: PropTypes.bool,
+        /**
+         * An optional property to configure if GPT should be loaded from the limited ads source rather than from the official source.
+         * https://developers.google.com/publisher-tag/guides/general-best-practices?hl=en#load_from_an_official_source
+         *
+         * Set to `true` to mark the ad request as limited, and to `false` for the personalized ads requests when user consent has been given.
+         * It is `false` by default, according to Google's definition.
+         *
+         * @property limited
+         */
+        limited: PropTypes.bool
     };
 
     /**
@@ -251,8 +261,16 @@ class Bling extends Component {
     static _config = {
         /**
          * An optional string for GPT seed file url to override.
+         * Defaults to the officially recommended GPT url.
+         * https://developers.google.com/publisher-tag/guides/general-best-practices?hl=en#load_from_an_official_source
          */
-        seedFileUrl: "//www.googletagservices.com/tag/js/gpt.js",
+        seedFileUrl: "//securepubads.g.doubleclick.net/tag/js/gpt.js",
+        /**
+         * An optional string for the limited GPT seed file url to override.
+         * Defaults to the officially recommended limited GPT url.
+         * https://developers.google.com/publisher-tag/guides/general-best-practices?hl=en#load_from_an_official_source
+         */
+        seedFileUrlLimited: "//pagead2.googlesyndication.com/tag/js/gpt.js",
         /**
          * An optional flag to indicate whether an ad should only render when it's fully in the viewport area. Default is `true`.
          */
@@ -394,10 +412,20 @@ class Bling extends Component {
             : Bling._config.viewableThreshold;
     }
 
+    getSeedUrl() {
+        const {limited} = this.props;
+
+        if (limited) {
+            return Bling._config.seedFileUrlLimited;
+        }
+
+        return Bling._config.seedFileUrl;
+    }
+
     componentDidMount() {
         Bling._adManager.addInstance(this);
         Bling._adManager
-            .load(Bling._config.seedFileUrl)
+            .load(this.getSeedUrl())
             .then(this.onScriptLoaded.bind(this))
             .catch(this.onScriptError.bind(this));
     }
@@ -504,10 +532,7 @@ class Bling extends Component {
     }
 
     onScriptError(err) {
-        console.warn(
-            `Ad: Failed to load gpt for ${Bling._config.seedFileUrl}`,
-            err
-        );
+        console.warn(`Ad: Failed to load gpt for ${this.getSeedUrl()}`, err);
     }
 
     getRenderWhenViewable(props = this.props) {
