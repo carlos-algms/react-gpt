@@ -534,7 +534,7 @@ class Bling extends Component {
     }
 
     onScriptError(err) {
-        console.warn(`Ad: Failed to load gpt for ${this.seedUrl()}`, err);
+        console.warn(`Ad: Failed to load gpt for ${this.seedUrl}`, err);
     }
 
     getRenderWhenViewable(props = this.props) {

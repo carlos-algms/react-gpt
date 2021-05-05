@@ -97,15 +97,6 @@ export class AdManager extends EventEmitter {
         }
     }
 
-    _setPrivacySettings(custom = {}) {
-        const config = this.googletag.PrivacySettingsConfig;
-
-        // based on https://developers.google.com/publisher-tag/reference#googletag.privacysettingsconfig
-        this.googletag.PrivacySettingsConfig = config
-            ? {...config, ...custom}
-            : custom;
-    }
-
     _processPubadsQueue() {
         if (this._pubadsProxyQueue) {
             Object.keys(this._pubadsProxyQueue).forEach(method => {
@@ -323,9 +314,13 @@ export class AdManager extends EventEmitter {
      * @param {Boolean} limited A boolean signaling if limited ads should be shown [true] or not [false/omitted].
      */
     setLimited(limited) {
-        this._setPrivacySettings({
-            // based on https://developers.google.com/publisher-tag/reference#boolean-limitedads
-            limitedAds: !!limited
+        this.googletag.cmd.push(() => {
+            this.googletag.pubads().setPrivacySettings({
+                limitedAds: limited
+            });
+
+            // Refresh all ads on the page.
+            this.googletag.pubads().refresh();
         });
     }
 
