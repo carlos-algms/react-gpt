@@ -308,6 +308,22 @@ export class AdManager extends EventEmitter {
         });
     }
 
+    /**
+     * Sets the tag manager to use limited ads when customer compliance is not given.
+     *
+     * @param {Boolean} limited A boolean signaling if limited ads should be shown [true] or not [false/omitted].
+     */
+    setLimited(limited) {
+        this.googletag.cmd.push(() => {
+            this.googletag.pubads().setPrivacySettings({
+                limitedAds: limited
+            });
+
+            // Refresh all ads on the page.
+            this.googletag.pubads().refresh();
+        });
+    }
+
     isInViewport(...args) {
         return isInViewport(...args);
     }
