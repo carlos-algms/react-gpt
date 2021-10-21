@@ -229,8 +229,7 @@ class Bling extends Component {
         "collapseEmptyDiv",
         "companionAdService",
         "forceSafeFrame",
-        "safeFrameConfig",
-        "limitedAds"
+        "safeFrameConfig"
     ];
     /**
      * An array of prop names which requires to create a new ad slot and render as a new ad.
@@ -266,13 +265,13 @@ class Bling extends Component {
          * Defaults to the officially recommended GPT url.
          * https://developers.google.com/publisher-tag/guides/general-best-practices?hl=en#load_from_an_official_source
          */
-        seedFileUrl: "//securepubads.g.doubleclick.net/tag/js/gpt.js",
+        seedFileUrl: "https://securepubads.g.doubleclick.net/tag/js/gpt.js",
         /**
          * An optional string for the limited GPT seed file url to override.
          * Defaults to the officially recommended limited GPT url.
          * https://developers.google.com/publisher-tag/guides/general-best-practices?hl=en#load_from_an_official_source
          */
-        seedFileUrlLimited: "//pagead2.googlesyndication.com/tag/js/gpt.js",
+        seedFileUrlLimited: "https://pagead2.googlesyndication.com/tag/js/gpt.js",
         /**
          * An optional flag to indicate whether an ad should only render when it's fully in the viewport area. Default is `true`.
          */
@@ -445,60 +444,65 @@ class Bling extends Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        // if adUnitPath changes, need to create a new slot, re-render
-        // otherwise, just refresh
-        const { scriptLoaded, inViewport } = nextState;
-        const notInViewport = this.notInViewport(nextProps, nextState);
-        const inViewportChanged = this.state.inViewport !== inViewport;
-        const isScriptLoaded = this.state.scriptLoaded !== scriptLoaded;
+        try {
+            // if adUnitPath changes, need to create a new slot, re-render
+            // otherwise, just refresh
+            const { scriptLoaded, inViewport } = nextState;
+            const notInViewport = this.notInViewport(nextProps, nextState);
+            const inViewportChanged = this.state.inViewport !== inViewport;
+            const isScriptLoaded = this.state.scriptLoaded !== scriptLoaded;
 
-        // Exit early for visibility change, before executing deep equality check.
-        if (notInViewport) {
-            return false;
-        } else if (inViewportChanged) {
-            return true;
-        }
-
-        const { filterProps, propsEqual } = Bling._config;
-        const refreshableProps = filterProps(
-            Bling.refreshableProps,
-            this.props,
-            nextProps
-        );
-        const reRenderProps = filterProps(
-            Bling.reRenderProps,
-            this.props,
-            nextProps
-        );
-        const shouldRender = !propsEqual(
-            reRenderProps.props,
-            reRenderProps.nextProps
-        );
-        const shouldRefresh =
-            !shouldRender &&
-            !propsEqual(refreshableProps.props, refreshableProps.nextProps);
-
-        if (shouldRefresh) {
-            this.configureSlot(this._adSlot, nextProps);
-        }
-
-        if (Bling._adManager._syncCorrelator) {
-            if (shouldRefresh) {
-                Bling._adManager.refresh();
-            } else if (shouldRender || isScriptLoaded) {
-                Bling._adManager.renderAll();
-            }
-        } else {
-            if (shouldRefresh) {
-                this.refresh();
+            // Exit early for visibility change, before executing deep equality check.
+            if (notInViewport) {
                 return false;
-            }
-            if (shouldRender || isScriptLoaded) {
+            } else if (inViewportChanged) {
                 return true;
             }
-        }
 
-        return false;
+            const { filterProps, propsEqual } = Bling._config;
+            const refreshableProps = filterProps(
+                Bling.refreshableProps,
+                this.props,
+                nextProps
+            );
+            const reRenderProps = filterProps(
+                Bling.reRenderProps,
+                this.props,
+                nextProps
+            );
+            const shouldRender = 
+                !this._adSlot ||
+                !propsEqual(reRenderProps.props, reRenderProps.nextProps);
+            const shouldRefresh =
+                !shouldRender &&
+                !propsEqual(refreshableProps.props, refreshableProps.nextProps);
+
+            if (shouldRefresh && Bling._adManager.pubadsReady) {
+                this.configureSlot(this._adSlot, nextProps);
+            }
+
+            if (Bling._adManager._syncCorrelator) {
+                if (shouldRefresh) {
+                    Bling._adManager.refresh();
+                } else if (shouldRender || isScriptLoaded) {
+                    Bling._adManager.renderAll();
+                }
+            } else {
+                if (shouldRefresh) {
+                    this.refresh();
+                    return false;
+                }
+                if (shouldRender || isScriptLoaded) {
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (error) {
+            console.error(error);
+
+            return true;
+        }
     }
 
     componentDidUpdate() {
@@ -570,7 +574,7 @@ class Bling extends Component {
     }
 
     defineSizeMapping(adSlot, sizeMapping) {
-        if (sizeMapping) {
+        if (Bling._adManager.pubadsReady && sizeMapping) {
             Bling._adManager.addMQListener(this, this.props);
             const sizeMappingArray = sizeMapping
                 .reduce((mapping, size) => {
@@ -674,6 +678,10 @@ class Bling extends Component {
     }
 
     configureSlot(adSlot, props = this.props) {
+        if (!adSlot) {
+            return;
+        }
+
         const {
             sizeMapping,
             attributes,
