@@ -574,7 +574,7 @@ class Bling extends Component {
     }
 
     defineSizeMapping(adSlot, sizeMapping) {
-        if (Bling._adManager.pubadsReady && sizeMapping) {
+        if (sizeMapping) {
             Bling._adManager.addMQListener(this, this.props);
             const sizeMappingArray = sizeMapping
                 .reduce((mapping, size) => {
