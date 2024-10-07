@@ -511,6 +511,7 @@ export class AdManager extends EventEmitter {
                     const script = document.createElement("script");
                     script.async = true;
                     script.onload = onLoad;
+                    script.setAttribute("crossorigin", "anonymous");
                     script.onerror = () => {
                         reject(new Error("failed to load script"));
                     };
